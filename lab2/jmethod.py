@@ -1,13 +1,8 @@
 import multiprocessing
-
 import numpy as np
 import random
 import sys
 import time
-
-# size of matrix and ro
-n = 270
-ro = 1e-14
 
 
 # show precision
@@ -49,7 +44,7 @@ def gen_a(n):
     return a
 
 
-def jacobi_method_1(a, b, n):
+def jacobi_method_1(a, b, n, ro, nr):
     x1 = np.zeros(n, dtype=my_type)
     x2 = np.zeros(n, dtype=my_type)
     xdiff = np.ones(n, dtype=my_type)
@@ -65,7 +60,8 @@ def jacobi_method_1(a, b, n):
     k = 0
     while np.linalg.norm(xdiff - x1) > ro:
         k += 1
-        print('nr iteracji: ' + str(k))
+        if k % 1000 == 0:
+            print(str(time.process_time()) + ': nr ' + str(nr) + ' iteracja ' + str(k))
         for i in range(n):
             x2[i] = (1/a[i][i]) * b[i]
             for j in range(n):
@@ -82,7 +78,7 @@ def jacobi_method_1(a, b, n):
     return x1, k
 
 
-def jacobi_method_2(a, b, n):
+def jacobi_method_2(a, b, n, ro, nr):
     x1 = np.zeros(n, dtype=my_type)
     x2 = np.zeros(n, dtype=my_type)
     m = np.zeros((n, n), dtype=my_type)
@@ -118,7 +114,7 @@ def print_input(a, x, b):
     print(b)
 
 
-def new_jacobi(n, ro, method, result):
+def new_jacobi(n, ro, method, result, nr):
     a = gen_a(n)
     x = gen_x(n)
     b = np.dot(a, x)
@@ -129,16 +125,19 @@ def new_jacobi(n, ro, method, result):
     start_time = time.process_time()
 
     if method == 1:
-        x_solution, iterations = jacobi_method_1(a, b, n)
+        x_solution, iterations = jacobi_method_1(a, b, n, ro, nr)
     else:
-        x_solution, iterations = jacobi_method_2(a, b, n)
+        x_solution, iterations = jacobi_method_2(a, b, n, ro, nr)
 
     end_time = time.process_time()
 
     elapsed_time = end_time - start_time
     x_diff = np.linalg.norm(x_solution - x)
 
-    result.append((n, ro, x_diff, elapsed_time, iterations))
+    res = (n, ro, x_diff, elapsed_time, iterations)
+    print(res)
+
+    result.append(res)
 
 
 def main():
@@ -151,25 +150,14 @@ def main():
     result = manager.list()
     jobs = []
 
-    process = multiprocessing.Process(target=new_jacobi, args=(270, 1e-5, 1, result))
+    process = multiprocessing.Process(target=new_jacobi, args=(285, 1e-5, 1, result, 1))
     jobs.append(process)
-    process = multiprocessing.Process(target=new_jacobi, args=(270, 1e-10, 1, result))
+    process = multiprocessing.Process(target=new_jacobi, args=(285, 1e-10, 1, result, 2))
     jobs.append(process)
-    process = multiprocessing.Process(target=new_jacobi, args=(270, 1e-14, 1, result))
-    jobs.append(process)
-
-    process = multiprocessing.Process(target=new_jacobi, args=(280, 1e-5, 1, result))
-    jobs.append(process)
-    process = multiprocessing.Process(target=new_jacobi, args=(280, 1e-10, 1, result))
-    jobs.append(process)
-    process = multiprocessing.Process(target=new_jacobi, args=(280, 1e-14, 1, result))
+    process = multiprocessing.Process(target=new_jacobi, args=(285, 1e-13, 1, result, 3))
     jobs.append(process)
 
-    process = multiprocessing.Process(target=new_jacobi, args=(287, 1e-5, 1, result))
-    jobs.append(process)
-    process = multiprocessing.Process(target=new_jacobi, args=(287, 1e-10, 1, result))
-    jobs.append(process)
-    process = multiprocessing.Process(target=new_jacobi, args=(287, 1e-14, 1, result))
+    process = multiprocessing.Process(target=new_jacobi, args=(285, 1e-14, 1, result, 4))
     jobs.append(process)
 
     for j in jobs:
