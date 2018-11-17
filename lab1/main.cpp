@@ -24,6 +24,7 @@ void showDifferenceEu(my_type *t1, my_type *t2, int n);
 void showDifferenceMax(my_type *t1, my_type *t2, int n);
 my_type *solve3DiagonalMatrix(my_type *a, my_type *c, my_type *b, int n);
 my_type *multiply3diagonalMatrix(my_type *a, my_type *c, my_type *x, int n);
+my_type **generateMatrix3(my_type **t, int n, int m);
 
 // shift significant places before comma, cut everything after comma
 // then shift everything back again
@@ -34,8 +35,7 @@ my_type getPrecision(my_type value, my_type precision)
 }
 
 
-int n = 5;
-
+int n = 1000;
 
 const int prec = 13;     //significant places
 const my_type eps = 1 / pow(10, prec);
@@ -53,11 +53,11 @@ int main() {
     m = n;
 
     // memory allocation
-/*
+
     my_type **A = new my_type*[n];
     for(int i = 0; i<n ; i++){
         A[i] = new my_type[m+1];
-    }*/
+    }
 
     my_type *x = new my_type[m];
     my_type *B = new my_type[m];
@@ -66,8 +66,9 @@ int main() {
     // Multiplying
     //A = generateMatrix1(A, n, m);
     //A = generateMatrix2(A, n, m);
+    A = generateMatrix3(A, n, m);
 
-
+/*
     //trojdiagonal
     my_type k = 6.0;
     my_type *a = new my_type[n];
@@ -80,15 +81,15 @@ int main() {
     a[n-1] = k / (n + m + 1);
 
     //trojdiagonal end
-
+*/
 
     x = generateArray(x, m);
     //showMatrix(A, n, m, 0);
     cout << "Multiply by (expected result) =============" << endl;
     //showArray(x, m);
     cout << "===========================================" << endl;
-    //B = multiplyMatrix(A, n, m, x);
-    B = multiply3diagonalMatrix(a, c, x, n);
+    B = multiplyMatrix(A, n, m, x);
+    //B = multiply3diagonalMatrix(a, c, x, n);
     cout << "Result:" << endl;
     //showArray(B, m);
     cout<<endl;
@@ -100,22 +101,22 @@ int main() {
     //or
     //generateMatrix(A, n, m);
 
-    /*
+
     // copy the result to full A matrix -- only with multiplying part
     for(int i=0; i<m; i++){
         B[i] = getPrecision(B[i], prec);
         A[i][m] = B[i];
     }
-*/
+
     //showMatrix(A, n, m+1, 1);
 
-    //my_type *solution = gaussElimination(A, n, m+1);
-    //if(solution != NULL) showDifferenceEu(x, solution, m);
-    //if(solution != NULL) showDifferenceMax(x, solution, m);
+    my_type *solution = gaussElimination(A, n, m+1);
+    if(solution != NULL) showDifferenceEu(x, solution, m);
+    if(solution != NULL) showDifferenceMax(x, solution, m);
 
-    my_type *solution3 = solve3DiagonalMatrix(a, c, B, n);
-    showDifferenceEu(x, solution3, n);
-    showDifferenceMax(x, solution3, n);
+    //my_type *solution3 = solve3DiagonalMatrix(a, c, B, n);
+    //showDifferenceEu(x, solution3, n);
+    //showDifferenceMax(x, solution3, n);
 
     return 0;
 }
@@ -177,6 +178,26 @@ my_type **generateMatrix2(my_type **t, int n, int m){
     return t;
 }
 
+// third task
+my_type **generateMatrix3(my_type **t, int n, int m){
+
+    for(int i=0; i<n ; i++){
+        for(int j=0; j<m; j++){
+            if(j == i)
+                t[i][j] = my_type(6);
+            else if(i+1 == j){
+                t[i][j] = 6.0/(i+1 + 2);
+            } else if(i-1 == j){
+                t[i][j] = 6.0/(i+1 + 2 + 1);
+            } else
+                t[i][j] = 0.0;
+            t[i][j] = getPrecision(t[i][j], prec);
+        }
+    }
+    cout << endl;
+    return t;
+}
+
 
 
 
@@ -184,9 +205,8 @@ void showMatrix(my_type **t, int n, int m, int extraSize = 0){
 
     for(int i=0; i<n ; i++){
         for(int j=0; j<m; j++){
-            cout << t[i][j] << "\t";
-            if(j+2 == m && extraSize == 1) cout<< "|";
-            cout << "\t";
+            cout << setprecision(16) << t[i][j] << "\t";
+            if(j+2 == m && extraSize == 1) cout<< "|" << "\t";
         }
         cout << endl;
     }
@@ -296,10 +316,8 @@ my_type *readArray(my_type *p, int n){
 
 my_type *generateArray(my_type *p, int n){
     cout << "Array x to multiply: " << endl;
-    srand(time(NULL));
     for(int i=0; i<n ; i++){
-        int x = rand() % 2;
-        if(x == 0)
+        if(i%2 == 0)
             p[i] = 1.0;
         else
             p[i] = -1.0;
@@ -330,6 +348,7 @@ void showDifferenceEu(my_type *t1, my_type *t2, int n){
     cout << endl << "======== Euclides difference: ===========" << endl;
     for(int i=0; i<n; i++){
         dif[i] = t2[i] - t1[i];
+        //cout << dif[i] <<endl;
         res += dif[i] * dif[i];
     }
     res = sqrt(res);
@@ -344,9 +363,12 @@ void showDifferenceMax(my_type *t1, my_type *t2, int n){
     my_type tmp;
     for(int i=0; i<n; i++){
         tmp = abs(t2[i] - t1[i]);
+        //if(tmp != 0)
+        //    cout << "diff\t" << tmp << endl;
         if(tmp > maxi)
             maxi = tmp;
     }
+    //cout << "TEST: " << setprecision(16) << t2[100] - t1[100] <<endl;
     cout << setprecision(16) << maxi;
     cout << endl << "=========================================" << endl;
 }
@@ -364,15 +386,15 @@ my_type *solve3DiagonalMatrix(my_type *a, my_type *c, my_type *b, int n){
     my_type m = 2.0;
 
     u[0] = k;
-    c[0] = 1.0 / (1 + m);
+    //c[0] = 1.0 / (1 + m);
     for(int i=1; i<n-1;i++){
-        a[i] = k / (i + 2 + m);
-        c[i] = 1.0 / (i + 1 + m);
+        //a[i] = k / (i + 2 + m);
+        //c[i] = 1.0 / (i + 1 + m);
 
         l[i] = (my_type)(a[i] / u[i-1]);
         u[i] = k - (l[i] * c[i-1]);
     }
-    a[n-1] = k / (n + m + 1);
+    //a[n-1] = k / (n + m + 1);
     l[n-1] = (my_type)(a[n-1] / u[n-2]);
     u[n-1] = k - (l[n-1] * c[n-2]);
 
@@ -408,7 +430,7 @@ my_type *multiply3diagonalMatrix(my_type *a, my_type *c, my_type *x, int n){
     my_type *b = new my_type[n];
     my_type k = 6.0;
 
-    b[0] =k * x[0];
+    b[0] = k * x[0];
     b[0] += c[0] * x[1];
     for(int i=1 ; i<n-1; i++){
         b[i] = a[i] * x[i-1];
