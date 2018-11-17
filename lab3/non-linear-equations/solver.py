@@ -5,7 +5,7 @@ import numpy as np
 # show precision
 np.set_printoptions(floatmode='unique')
 ro = 1e-3
-
+ 
 
 # here change computation precision
 type_object = np.float64()
