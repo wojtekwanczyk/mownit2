@@ -1,23 +1,33 @@
 import sys
 import numpy as np
+import xlwt
+from pandas import DataFrame
+import openpyxl
+import matplotlib.pyplot as plot
 
 
 # show precision
-np.set_printoptions(floatmode='unique')
-ro = 1e-3
-  
+# np.set_printoptions(floatmode='unique')
+
 
 # here change computation precision
 type_object = np.float64()
 my_type = type(type_object)
 
+
+def save(filename, results):
+    filename += '.xlsx'
+    df = DataFrame(data=results)
+    # print(df)
+    df.to_excel(filename, sheet_name='sheet1', index=False, header=False)
+
+
 def f(x):
-    return (x-1) * (np.exp(1)**(-15*x) + x**13)
+    return (x-1) * (np.exp(1)**(-15*x)) + (x**13)
 
 
 def f_der(x):
-    return np.exp(1)**(-15*x) * (13 * x**12 * np.exp(1)**(15*x) - 15*x + 16)
-
+    return np.exp(1)**(-15*x) * (13 * (x**12) * np.exp(1)**(15*x) - 15*x + 16)
 
 
 def print_polynomial(f):
@@ -48,100 +58,152 @@ def derivative(f):
 
 
 # f - array z kolejnymi wspolczynnikami
-def secant_method(a, b):
-    x = 0
-    i = 0
-    max_iter = 100
+def secant_method(a, b, ro, cond):
 
-    cond = 1
-
+    iterations = 0
     if cond == 1:
-        y = f(x)
+        cond_val = abs(b - a)
     else:
-        y = 100
-    while a != b and i < max_iter:
+        cond_val = abs(f(b))
+
+    while cond_val >= ro:
+        iterations += 1
         # print(a, b)
-        #x = b - ((get_value(f, b) * (b - a)) / (get_value(f, b) - get_value(f, a)))
+
         x = b - ((f(b) * (b-a)) / (f(b) - f(a)))
-
         a, b = b, x
-        i += 1
-        x = x - (f(x) / f_der(x))
+
         if cond == 1:
-            y = f(x)
+            cond_val = abs(b - a)
         else:
-            y = abs(x - b)
+            cond_val = abs(f(b))
 
-    if i == max_iter:
-        return np.nan
+    # print("Iterations: " + str(iterations))
+    #print('cond: ' + str(cond) + ' x: ' + str(b))
+    return b, iterations
 
-    return x
 
+def newton_method(x, ro, cond):
 
-def newton_method(x):
-    max_iter = 100
-    i = 0
-    #f2 = derivative(f)
-
-    cond = 2
-
+    iterations = 0
     if cond == 1:
-        y = f(x)
+        cond_val = 100
     else:
-        y = 100
+        cond_val = abs(f(x))
 
-    while abs(y) >= ro and i < max_iter:
+    while cond_val >= ro:
+        iterations += 1
         # print(y)
-        #x = x - (y / get_value(f2, x))
+
         x_bkp = x
-        x = x - (f(x) / f_der(x))
+        x = x_bkp - (f(x_bkp) / f_der(x_bkp))
+
         if cond == 1:
-            y = f(x)
+            cond_val = abs(x - x_bkp)
         else:
-            y = abs(x_bkp - x)
-        i += 1
+            cond_val = abs(f(x))
 
-    print("Iterations: " + str(i))
-    if i == max_iter:
-        return np.nan
-
-    return x
+    # print("Iterations: " + str(iterations))
+    return x, iterations
 
 
+def show(x):
+    print("x: " + str(x) + '\tf(x): ' + str(f(x)))
+
+
+def calc_1():
+    a = -0.8
+    b = 0.9
+    ro = 1e-14
+    cond = 1
+    samples = 17
+    step = 0.1
+
+    results = [['newton', 'cond1', '', '']]
+    results.append(['start \\ ro', 1e-3, 1e-8, 1e-15])
+    s = a
+    for i in range(samples):
+        x1, i1 = newton_method(s, 1e-3, cond)
+        x2, i2 = newton_method(s, 1e-8, cond)
+        x3, i3 = newton_method(s, 1e-15, cond)
+        results.append([s] + [i1, i2, i3])
+        #results.append([s] + [x1, x2, x3])
+        s += step
+
+    results.append(['', '', '', ''])
+    results.append(['newton', 'cond2', '', ''])
+    results.append(['start \\ ro', 1e-3, 1e-8, 1e-15])
+    cond = 2
+    s = a
+    for i in range(samples):
+        x1, i1 = newton_method(s, 1e-3, cond)
+        x2, i2 = newton_method(s, 1e-8, cond)
+        x3, i3 = newton_method(s, 1e-15, cond)
+        results.append([s] + [i1, i2, i3])
+        #results.append([s] + [x1, x2, x3])
+        s += step
+
+    results.append(['', '', '', ''])
+    results.append(['sieczne', 'cond1', 'od a', ''])
+    results.append(['start \\ ro', 1e-3, 1e-8, 1e-15])
+    cond = 1
+    s = a
+    for i in range(samples):
+        x1, i1 = secant_method(s, b, 1e-3, cond)
+        x2, i2 = secant_method(s, b, 1e-8, cond)
+        x3, i3 = secant_method(s, b, 1e-15, cond)
+        results.append([s] + [i1, i2, i3])
+        #results.append([s] + [x1, x2, x3])
+        s += step
+
+    results.append(['', '', '', ''])
+    results.append(['sieczne', 'cond2', 'od a', ''])
+    results.append(['start \\ ro', 1e-3, 1e-8, 1e-15])
+    cond = 2
+    s = a
+    for i in range(samples):
+        x1, i1 = secant_method(s, b, 1e-3, cond)
+        x2, i2 = secant_method(s, b, 1e-8, cond)
+        x3, i3 = secant_method(s, b, 1e-15, cond)
+        results.append([s] + [i1, i2, i3])
+        #results.append([s] + [x1, x2, x3])
+        s += step
+
+    results.append(['', '', '', ''])
+    results.append(['sieczne', 'cond1', 'od b', ''])
+    results.append(['start \\ ro', 1e-3, 1e-8, 1e-15])
+    cond = 1
+    s = b
+    for i in range(samples):
+        x1, i1 = secant_method(a, s, 1e-3, cond)
+        x2, i2 = secant_method(a, s, 1e-8, cond)
+        x3, i3 = secant_method(a, s, 1e-15, cond)
+        results.append([s] + [i1, i2, i3])
+        #results.append([s] + [x1, x2, x3])
+        s -= step
+
+    results.append(['', '', '', ''])
+    results.append(['sieczne', 'cond2', 'od b', ''])
+    results.append(['start \\ ro', 1e-3, 1e-8, 1e-15])
+    cond = 2
+    s = b
+    for i in range(samples):
+        x1, i1 = secant_method(a, s, 1e-3, cond)
+        x2, i2 = secant_method(a, s, 1e-8, cond)
+        x3, i3 = secant_method(a, s, 1e-15, cond)
+        #results.append([s] + [x1, x2, x3])
+        results.append([s] + [i1, i2, i3])
+        s -= step
+
+    save("wyniki3", results)
 
 
 def main():
-    #f = [3, 0, 0, 3, -2]
-    #f.reverse()
-    #print_polynomial(f)
-
-    # res1 = secant_method(f, -100, 0)
-    # res2 = newton_method(f, 0)
-    # print('Secant: ' + str(res1) + '\nNewton: ' + str(res2))
-
-    s = -0.8
-    for i in range(18):
-        res = newton_method(s)
-        print("Start: " + str(s) + "\t\tValue: " + str(res))
-        # print(np.exp(1))
-        s += 0.1
-
-    a = -0.8
-    b = 0.9
-
-    s = a
-    for i in range(18):
-        res = secant_method(s, b)
-        print("Start: " + str(s) + "\tEnd: " + str(b) + "\t\tValue: " + str(res))
-        # print(np.exp(1))
-        s += 0.1
+    # f = [3, 0, 0, 3, -2]
+    # f.reverse()
+    # print_polynomial(f)
     
-    s = b
-    for i in range(18):
-        res = secant_method(a, s)
-        print("Start: " + str(a) + "\tEnd: " + str(s) + "\t\tValue: " + str(res))
-        # print(np.exp(1))
-        s -= 0.1
+
 
 
 if __name__ == "__main__":
