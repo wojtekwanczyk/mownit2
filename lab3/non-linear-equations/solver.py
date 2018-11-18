@@ -1,9 +1,9 @@
 import sys
 import numpy as np
-import xlwt
 from pandas import DataFrame
-import openpyxl
-import matplotlib.pyplot as plot
+from random import randint as rand
+from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.pyplot as plt
 
 
 # show precision
@@ -198,11 +198,141 @@ def calc_1():
     save("wyniki3", results)
 
 
+def f_3(x):
+    ret = np.zeros(len(x))
+    ret[0] = x[0]**2 + x[1]**2 - x[2]**2 - 1
+    ret[1] = x[0] - 2 * x[1]**3 + 2 * x[2]**2 + 1
+    ret[2] = 2 * x[0]**2 + x[1] - 2 * x[2]**2 - 1
+
+    # print(ret)
+    return ret
+
+
+def mul2(x):
+    return 2 * x
+
+
+def mul_2(x):
+    return -2 * x
+
+
+def mul4(x):
+    return 4 * x
+
+
+def mul_4(x):
+    return -4 * x
+
+
+def mul_6_sqr(x):
+    return -6 * (x**2)
+
+
+def one(x):
+    return 1
+
+
+jacobian = [[mul2, mul2, mul_2],
+            [one, mul_6_sqr, mul4],
+            [mul4, one, mul_4]]
+
+
+def solve(start, ro, cond):
+    print(start)
+    n = 3
+    jacobian_instance = np.full((n, n), 0)
+
+    if cond == 1:
+        cond_val = 100
+    else:
+        cond_val = abs(np.linalg.norm(f_3(start), ord=np.inf))
+    new = []
+
+    while cond_val >= ro:
+        for i in range(n):
+            for j in range(n):
+                jacobian_instance[i][j] = jacobian[i][j](start[j])
+
+        new = start - np.dot(f_3(start), np.linalg.inv(jacobian_instance))
+        print(f_3(start))
+
+        if cond == 1:
+            cond_val = abs(np.linalg.norm(new - start, ord=np.inf))
+        else:
+            cond_val = abs(np.linalg.norm(f_3(new), ord=np.inf))
+
+        start = new
+
+    print(new)
+
+
+def test_and_add(i1, j1, k1, xs, ys, zs):
+    eps = 0.1
+    vec = f_3([i1, j1, k1])
+    # print(vec)
+    for p in range(3):
+        if vec[p] == 0:
+            xs[p].append(i1)
+            ys[p].append(j1)
+            zs[p].append(k1)
+    if abs(vec[0]) < eps and abs(vec[1]) < eps and abs(vec[2]) < eps:
+        print("FOUND: " + str(i1) + ' ' + str(j1)
+              + ' ' + str(k1) + ' ' + str(vec))
+    return xs, ys, zs
+
+
 def main():
-    # f = [3, 0, 0, 3, -2]
-    # f.reverse()
-    # print_polynomial(f)
+    cond = 2
+
+    '''
+    il = 1e-2
+    for i in range(10000):
+        start = [(rand(0, 200) * -il) - 0.1, (rand(0, 200) * il) - 0.1, (rand(0, 200) * il) - 0.1]
+        #print(start)
+        try:
+            solve(start, 1e-2, cond)
+            print('Found: ' + str(start) + ' !!!!!!!!')
+        except OverflowError:
+            pass
+        except np.linalg.linalg.LinAlgError:
+            pass
+    '''
+
+    start = [1, 1, 1]
+    solve(start, 1e-10, cond)
+
+    '''
+    fig = plt.figure()
+    ax = plt.axes(projection='3d')
+    n = 50
+    il = 1
+    xs = [[], [], []]
+    ys = [[], [], []]
+    zs = [[], [], []]
+    for i in range(n):
+        for j in range(n):
+            for k in range(n):
+                i1 = i * il
+                j1 = j * il
+                k1 = k * il
+                xs, ys, zs = test_and_add(i1, j1, k1, xs, ys, zs)
+                xs, ys, zs = test_and_add(i1, j1, -k1, xs, ys, zs)
+                xs, ys, zs = test_and_add(i1, -j1, k1, xs, ys, zs)
+                xs, ys, zs = test_and_add(-i1, j1, k1, xs, ys, zs)
+                xs, ys, zs = test_and_add(-i1, -j1, k1, xs, ys, zs)
+                xs, ys, zs = test_and_add(-i1, j1, -k1, xs, ys, zs)
+                xs, ys, zs = test_and_add(i1, -j1, -k1, xs, ys, zs)
+                xs, ys, zs = test_and_add(-i1, -j1, -k1, xs, ys, zs)
+
+
+    #ax.scatter3D(xs[0], ys[0], zs[0], 'gray')
+    #ax.scatter3D(xs[1], ys[1], zs[1], 'blue')
+    ax.scatter(xs[2], ys[2], zs[2])
     
+    plt.show()
+
+    '''
+
 
 
 
