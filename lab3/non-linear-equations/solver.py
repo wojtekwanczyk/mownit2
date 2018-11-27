@@ -19,6 +19,7 @@ def save(filename, results):
     filename += '.xlsx'
     df = DataFrame(data=results)
     # print(df)
+    df = df.transpose()
     df.to_excel(filename, sheet_name='sheet1', index=False, header=False)
 
 
@@ -253,8 +254,8 @@ def solve(start, ro, cond):
             for j in range(n):
                 jacobian_instance[i][j] = jacobian[i][j](start[j])
 
-        new = start - np.dot(f_3(start), np.linalg.inv(jacobian_instance))
-        print(f_3(start))
+        new = start - np.linalg.inv(jacobian_instance).dot(f_3(start))
+        #print(new)
 
         if cond == 1:
             cond_val = abs(np.linalg.norm(new - start, ord=np.inf))
@@ -263,7 +264,8 @@ def solve(start, ro, cond):
 
         start = new
 
-    print(new)
+    #print(new)
+    return new
 
 
 def test_and_add(i1, j1, k1, xs, ys, zs):
@@ -281,25 +283,39 @@ def test_and_add(i1, j1, k1, xs, ys, zs):
     return xs, ys, zs
 
 
+
+
 def main():
     cond = 2
 
-    '''
-    il = 1e-2
-    for i in range(10000):
-        start = [(rand(0, 200) * -il) - 0.1, (rand(0, 200) * il) - 0.1, (rand(0, 200) * il) - 0.1]
+    found = ['found']
+    vectors = ['vectors']
+    not_found = ['not found - overflow']
+    not_found_2 = ['not found - singular matrix']
+
+
+    il = 1
+    zak = 10
+    for i in range(100):
+        start = [(rand(-zak, zak) * -il), (rand(-zak, zak) * il), (rand(-zak, zak) * il)]
         #print(start)
         try:
-            solve(start, 1e-2, cond)
+            v = solve(start, 1e-1, cond)
             print('Found: ' + str(start) + ' !!!!!!!!')
+            found.append(start)
+            vectors.append(v)
         except OverflowError:
-            pass
+            print('Not found(overflow) ' + str(start))
+            not_found.append(start)
         except np.linalg.linalg.LinAlgError:
-            pass
-    '''
+            print('Not found(singular matrix) ' + str(start))
+            not_found_2.append(start)
 
-    start = [1, 1, 1]
-    solve(start, 1e-10, cond)
+    res = [found, vectors, not_found, not_found_2]
+    save('wyniki4', res)
+
+
+
 
     '''
     fig = plt.figure()
