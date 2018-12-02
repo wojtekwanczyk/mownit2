@@ -84,14 +84,15 @@ def spline2(x_points, y_points, xs, boundary_cond):
     if boundary_cond == 1:
         b = [0] + b
     else:
-        b = [b[0]] + b
+        b = [b[-1]] + b
+        # b = [b[0]] + b
 
     a = []; c = []
     for i in range(size):
         a.append((b[i+1] - b[i]) / (2 * h[i]))
         c.append(y_points[i])
-    if boundary_cond == 2:
-        b[0] = (y_points[1] - y_points[0]) / (x_points[1] - x_points[0])
+    # if boundary_cond == 2:
+    #    b[0] = (y_points[1] - y_points[0]) / (x_points[1] - x_points[0])
 
     nr_fun = 0
     ys = []
