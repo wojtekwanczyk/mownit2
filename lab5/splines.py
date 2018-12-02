@@ -77,7 +77,6 @@ def spline2(x_points, y_points, xs, boundary_cond):
     for i in range(size):
         h.append(x_points[i+1] - x_points[i])
         g[i] = 2 / h[i] * (y_points[i+1] - y_points[i])
-    h.append(x_points[-1] - x_points[-2])
     b = np.linalg.solve(matrix, g)
 
     # the boundary condition is set here
@@ -85,13 +84,14 @@ def spline2(x_points, y_points, xs, boundary_cond):
     if boundary_cond == 1:
         b = [0] + b
     else:
-        b = [b[-1]] + b
+        b = [b[0]] + b
 
     a = []; c = []
-    print(size)
     for i in range(size):
         a.append((b[i+1] - b[i]) / (2 * h[i]))
         c.append(y_points[i])
+    if boundary_cond == 2:
+        b[0] = (y_points[1] - y_points[0]) / (x_points[1] - x_points[0])
 
     nr_fun = 0
     ys = []
@@ -123,8 +123,13 @@ def main():
     xp = get_xs(start, end, n_points)
     yp = get_ys(xp)
 
-    plt.plot(xs, ys, 'k')
+    #xp = [-1, 0, 1]
+    #yp = [13, 7, 9]
+
+    #plt.plot(xs, ys, 'k')
     plt.plot(xp, yp, 'k.', markersize=10)
+
+
 
     if spline == 2 or spline == 0:
         ys = spline2(xp, yp, xs, 1)
