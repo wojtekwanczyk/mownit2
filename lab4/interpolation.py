@@ -1,10 +1,7 @@
-import multiprocessing
-import sys
 import numpy as np
 from pandas import DataFrame
 import matplotlib.pyplot as plt
-import math
-
+import sys
 
 # here change computation precision
 type_object = np.float64()
@@ -132,7 +129,6 @@ def plot_hermite(x, y, dens):
 
 
     plt.plot(xnew, ynew, 'k-')
-    plt.plot(x, y, 'x')
     plt.show()
     return ynew
 
@@ -168,7 +164,7 @@ def main():
 
 
 
-    for i in range(3,20,2):
+    for i in range(4,21):
         y1 = show_fun(f, beg, end, n_draw, 'b-')
 
         n_inter = i
@@ -178,10 +174,7 @@ def main():
         y_eq = f_list(x_eq)
 
 
-
-
         # Newton
-
 
         #f_show_points(x_cheby, 'r.')
         #c1 = interpolate_newton_get_vals(x_cheby, y_cheby)
@@ -189,8 +182,6 @@ def main():
 
         #print(str(n_inter) + " eu Newton(ch): " + str(np.linalg.norm(np.subtract(y2, y1))))
         #print(str(n_inter) + " max Newton(ch): " + str(np.linalg.norm(np.subtract(y2, y1), np.inf)))
-
-
 
         #f_show_points(x_eq, 'g.')
         #c2 = interpolate_newton_get_vals(x_eq, y_eq)
@@ -206,35 +197,24 @@ def main():
         #f_show_points(x_cheby, 'r.')
         #y2 = show_fun(lambda ar: intrepolate_lagrange(x_cheby, y_cheby, ar), beg, end, n_draw, 'r-')
 
-
         #print(str(n_inter) + " eu Lagrange(ch): " + str(np.linalg.norm(np.subtract(y2, y1))))
         #print(str(n_inter) + " max Lagrange(ch): " + str(np.linalg.norm(np.subtract(y2, y1), np.inf)))
 
         #f_show_points(x_eq, 'y.')
-        #y2 = show_fun(lambda ar: intrepolate_lagrange(x_eq, y_eq, ar), beg, end, n_draw, 'y-')
+        #y2 = show_fun(lambda ar: intrepolate_lagrange(x_eq, y_eq, ar), beg, end, n_draw, 'g-')
 
         #print(str(n_inter) + " eu Lagrange(eq): " + str(np.linalg.norm(np.subtract(y2, y1))))
         #print(str(n_inter) + " max Lagrange(eq): " + str(np.linalg.norm(np.subtract(y2, y1), np.inf)))
-
-
         #plt.show()
+
 
         # Hermite
 
-        #f_show_points(x_eq, 'c.')
-        #y2 = show_fun(lambda ar: interpolate_hermit(x_eq, y_eq, ar), beg, end, n_draw, 'c-')
-
+        f_show_points(x_eq, 'k.')
         y2 = plot_hermite(x_eq, y_eq, n_draw)
-
         mini = min(len(y2), len(y1))
-
         print(str(n_inter) + " eu Hermite(eq): " + str(np.linalg.norm(np.subtract(y2[:mini], y1[:mini]))))
         print(str(n_inter) + " max Hemrite(eq): " + str(np.linalg.norm(np.subtract(y2[:mini], y1[:mini]), np.inf)))
-
-
-
-
-
 
 
 if __name__ == "__main__":
