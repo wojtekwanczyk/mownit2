@@ -3,67 +3,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def spline3(xp, yp, xs, cond):
-    n_points = len(xp) - 1
-    n_plot = len(xs)
-
-    h = [(xp[i+1] - xp[i]) for i in range(n_points)]
-    z = solve(h, yp, n_points + 1)
-
-    '''
-    if cond == 1:
-        z[0] = 0
-        z[n_points] = 0
-    else:
-        z[0] = z[1]
-        z[n_points] = z[n_points-1]
-    '''
-
-    def S(i, x):
-        p1 = z[i+1] * (x - xp[i])**3 / (6 * h[i]) + z[i] * (xp[i+1] - x)**3 / (6 * h[i])
-        p2 = ((yp[i+1] / h[i]) - (h[i] * z[i+1] / 6)) * (x - xp[i])
-        p3 = ((yp[i] / h[i]) - h[i] * z[i] / 6) * (xp[i+1] - x)
-        return p1 + p2 + p3
-
-    ys = np.zeros(n_plot)
-
-    for i, xi in enumerate(xs):
-        for j, ti in enumerate(xp):
-            if xi < ti:
-                ys[i] = S(j - 1, xi)
-                break
-    ys[0] = yp[0]
-
-    return ys
-
-
-def solve(h, y, n):
-    u = np.zeros(n)
-    v = np.zeros(n)
-
-    for i in range(1, n-1):
-        u[i] = 2 * (h[i-1] + h[i])
-        v[i] = 6 * ((y[i+1] - y[i]) / h[i]) - ((y[i] - y[i-1]) / h[i-1])
-
-    for i in range(2, n-1):
-        u[i] -= h[i-1]**2 / u[i-1]
-        v[i] -= h[i-1] * v[i-1] / u[i-1]
-
-    z = np.zeros(n)
-    z[n-2] = v[n-2] / u[n-2]
-    z[0] = 0
-    z[n-1] = 10
-    for i in range(n-2, 0, -1):
-        z[i] = (v[i] - h[i] * z[i+1]) / u[i]
-
-    return z
+def f(x):
+    return pow(x, 2) - (10 * np.cos(np.pi * x))
 
 
 def spline2(xp, yp, xs, z0):
     n = len(xp) - 1
     nx = len(xs)
     ys = np.zeros(nx)
-
 
     z = np.zeros(n+1)
     z[0] = z0
@@ -73,7 +20,6 @@ def spline2(xp, yp, xs, z0):
     point = (lambda x, c:
          ((z[c+1] - z[c]) / (2 * (xp[c+1] - xp[c]))) * (x - xp[c])**2 + z[c] * (x - xp[c]) + yp[c])
 
-
     for i, xi in enumerate(xs):
         for j, pi in enumerate(xp):
             if xi < pi:
@@ -81,10 +27,6 @@ def spline2(xp, yp, xs, z0):
                 break
 
     return ys
-
-
-def f(x):
-    return np.sin(x) #* x**2 #x**12 - x**4 + 4
 
 
 def get_xs(a, b, n):
@@ -100,13 +42,63 @@ def get_ys(xs):
     return [f(x) for x in xs]
 
 
-def main():
-    start = 5
-    end = 15
-    n_points = 9
-    n_plot = 100
+def spline3(x_points, y_points, xs, edge_cond):
+    size = len(x_points) - 2
+    matrix = np.zeros((size, size))
 
-    xs = get_xs(start, end, n_plot)
+    for i in range(size):
+        for j in range(size):
+            if i == j:
+                matrix[i][j] = 4
+            if j == i+1 or j == i-1:
+                matrix[i][j] = 1
+
+    g = np.zeros(size); h = []
+    for i in range(size):
+        h.append(x_points[i+1] - x_points[i])
+        g[i] = 6 / (h[i]**2) * (y_points[i] - 2*y_points[i+1] + y_points[i+2])
+    h.append(x_points[-1] - x_points[-2])
+    z = np.linalg.solve(matrix, g)
+
+    # tu mozna zmienic warunki brzegowe
+    z = list(z)
+    if edge_cond == 1:
+        z = [0] + z + [0]
+    else:
+        z = [z[0]] + z + [z[-1]]
+
+
+    a = []; b = []; c = []; d = []
+    for i in range(size+1):
+        a.append((z[i+1] - z[i]) / (6 * h[i]))
+        b.append(0.5 * z[i])
+        c.append((y_points[i+1] - y_points[i]) / h[i] - (z[i+1] + 2 * z[i]) / 6 * h[i])
+        d.append(y_points[i])
+
+    nr_fun = 0
+    ys = []
+    for i in range(len(xs)):
+        while x_points[nr_fun + 1] < xs[i] < x_points[-1]:
+            nr_fun += 1
+        ys.append(get_val([d[nr_fun], c[nr_fun], b[nr_fun], a[nr_fun]], x_points[nr_fun], xs[i]))
+
+    return ys
+
+
+def get_val(coeff, xi, x):
+    val = 0
+    for i, elem in enumerate(coeff):
+        val += elem * (x - xi) ** i
+    return val
+
+
+def main():
+    start = -np.pi
+    end = np.pi
+    n_points = 8
+    n_draw = 1000
+
+    xs = get_xs(start, end, n_draw)
     ys = get_ys(xs)
 
     xp = get_xs(start, end, n_points)
@@ -116,14 +108,14 @@ def main():
     plt.plot(xp, yp, 'k.', markersize=10)
 
     #ys = spline2(xp, yp, xs, 100)
+
+    plt.plot(xp, yp, 'k.', markersize=10)
     ys = spline3(xp, yp, xs, 1)
-
     plt.plot(xs, ys)
+
+    ys = spline3(xp, yp, xs, 2)
+    plt.plot(xs, ys, 'r')
     plt.show()
-
-
-
-
 
 
 if __name__ == "__main__":
