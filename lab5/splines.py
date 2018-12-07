@@ -155,7 +155,9 @@ def main():
 
 
     for i in range(3, 21):
-        plt.figure(figsize=(11, 8))
+        print(i)
+        plt.figure(figsize=(9, 6))
+        #xp = get_xs(start, end, i)
         xp = cheby_zeros(i, start, end)
         yp = get_ys(xp)
         plt.plot(xp, yp, 'k.', markersize=10)
