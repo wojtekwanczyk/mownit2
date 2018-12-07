@@ -1,6 +1,15 @@
 import sys
 import matplotlib.pyplot as plt
 import numpy as np
+from pandas import DataFrame
+import openpyxl
+
+
+def save(filename, results):
+    filename += '.xlsx'
+    df = DataFrame(data=results)
+    print(df)
+    df.to_excel(filename, sheet_name='sheet1', index=False, header=False)
 
 
 def f(x):
@@ -81,18 +90,19 @@ def spline2(x_points, y_points, xs, boundary_cond):
 
     # the boundary condition is set here
     b = list(b)
-    if boundary_cond == 1:
-        b = [0] + b
-    else:
-        b = [b[-1]] + b
+    #if boundary_cond == 1:
+    b = [0] + b
+    #else:
+    #   b = [b[-1]] + b
         # b = [b[0]] + b
 
     a = []; c = []
     for i in range(size):
         a.append((b[i+1] - b[i]) / (2 * h[i]))
         c.append(y_points[i])
-    # if boundary_cond == 2:
-    #    b[0] = (y_points[1] - y_points[0]) / (x_points[1] - x_points[0])
+    if boundary_cond == 2:
+        b[0] = (y_points[1] - y_points[0]) / (x_points[1] - x_points[0])
+        a[0] = 0
 
     nr_fun = 0
     ys = []
@@ -110,6 +120,18 @@ def get_val(coeff, xi, x):
         val += elem * (x - xi) ** i
     return val
 
+def get_norm(y1, y2, which):
+    if which == "max":
+        return np.linalg.norm(np.subtract(y2, y1), np.inf)
+    if which == "eu":
+        return np.linalg.norm(np.subtract(y2, y1))
+
+
+def cheby_zeros(no, a, b):
+    ret = sorted(np.array([np.cos(((2 * j - 1) / (2 * (no))) * np.pi) for j in range(1, no+1)], dtype=np.float64))
+    for i in range(len(ret)):
+        ret[i] = 0.5 * (a+b) + 0.5 * (b-a) * ret[i]
+    return ret
 
 def main():
     start = -np.pi
@@ -119,31 +141,53 @@ def main():
     spline = 2
 
     xs = get_xs(start, end, n_draw)
-    ys = get_ys(xs)
+    ys_or = get_ys(xs)
 
-    xp = get_xs(start, end, n_points)
-    yp = get_ys(xp)
+
 
     #xp = [-1, 0, 1]
     #yp = [13, 7, 9]
 
-    #plt.plot(xs, ys, 'k')
-    plt.plot(xp, yp, 'k.', markersize=10)
 
 
 
-    if spline == 2 or spline == 0:
+    res = [['Liczba węzłów', 'spl2, nat', 'spl2, lin', 'spl3, nat', 'spl3, par']]
+
+
+    for i in range(3, 21):
+        plt.figure(figsize=(11, 8))
+        xp = cheby_zeros(i, start, end)
+        yp = get_ys(xp)
+        plt.plot(xp, yp, 'k.', markersize=10)
+        plt.plot(xs, ys_or, 'k', label='Funkcja interpolowana')
+        r = [i]
+    #if True: #spline == 2 or spline == 0:
         ys = spline2(xp, yp, xs, 1)
-        plt.plot(xs, ys, 'm')
+        plt.plot(xs, ys, 'm', label='Funkcja sklejana drugiego stopnia, natural spline')
+        r.append(get_norm(ys, ys_or, 'eu'))
         ys = spline2(xp, yp, xs, 2)
-        plt.plot(xs, ys, 'g')
-    if spline == 3 or spline == 0:
+        plt.plot(xs, ys, 'g', label='Funkcja sklejana drugiego stopnia, pierwsza funkcja liniowa')
+        r.append(get_norm(ys, ys_or, 'eu'))
+    #if True: #spline == 3 or spline == 0:
         ys = spline3(xp, yp, xs, 1)
-        plt.plot(xs, ys, 'b')
+        plt.plot(xs, ys, 'b', label='Funkcja sklejana trzeciego stopnia, natural spline')
+        r.append(get_norm(ys, ys_or, 'eu'))
         ys = spline3(xp, yp, xs, 2)
-        plt.plot(xs, ys, 'r')
+        plt.plot(xs, ys, 'r', label='Funkcja sklejana trzeciego stopnia, parabolic spline')
+        r.append(get_norm(ys, ys_or, 'eu'))
+        res.append(r)
 
-    plt.show()
+
+        plt.xlabel('x')
+        plt.ylabel('y')
+        plt.legend()
+        plt.show()
+
+
+
+    #save('res_cheby', res)
+
+
 
 
 if __name__ == "__main__":
