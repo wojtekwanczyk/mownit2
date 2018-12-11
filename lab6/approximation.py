@@ -97,6 +97,7 @@ def cheby_zeros(no, a, b):
         ret[i] = 0.5 * (a+b) + 0.5 * (b-a) * ret[i]
     return ret
 
+
 def get_error(y1, y2):
     err = 0
     for i in range(len(y1)):
@@ -105,12 +106,57 @@ def get_error(y1, y2):
     return np.sqrt(err)
 
 
+def calc_ak(xs, ys, k):
+    res = 0
+    n = len(xs)
+    for i in range(n):
+        res += ys[i] * np.cos(k * xs[i])
+    return (2/(n+1)) * res
+
+
+def calc_bk(xs, ys, k):
+    res = 0
+    n = len(xs)
+    for i in range(n):
+        res += ys[i] * np.sin(k * xs[i])
+    return (2/(n+1)) * res
+
+
+def approximate3(xp, yp, xs, m):
+    ys = []
+    for x in xs:
+        res = calc_ak(xp, yp, 0)/2
+        for k in range(1, m+1):
+            res += calc_ak(xp, yp, k) * np.cos(k * x)
+            res += calc_bk(xp, yp, k) * np.sin(k * x)
+        ys.append(res)
+    return ys
+
+
+def show_app3(xp, yp, xs, m, color, title):
+    y_app = approximate3(xp, yp, xs, m)
+
+    # base function
+    ys = f_list(xs)
+    plt.plot(xp, yp, color + '.', markersize=10)
+    plt.plot(xs, ys, 'grey')
+
+    # approximated function
+    plt.plot(xs, y_app, color, label=title)
+    plt.xlabel('x')
+    plt.ylabel('y')
+    plt.legend()
+
+    plt.draw()
+    return y_app
+
+
 def main():
     n_draw = 1000
     xs = get_xs(-np.pi, np.pi, n_draw)
 
     n_points = 30
-    degree = 3
+    degree = 1
 
     for j in range(10):
         x_points = get_xs(-np.pi, np.pi, n_points)
@@ -119,32 +165,24 @@ def main():
         x_cheby = cheby_zeros(n_points, -np.pi, np.pi)
         y_cheby = f_list(x_cheby)
 
-        b = approximate(x_points, y_points, degree)
-        b_cheby = approximate(x_cheby, y_cheby, degree)
+        #b = approximate(x_points, y_points, degree)
+        #b_cheby = approximate(x_cheby, y_cheby, degree)
+        #y_app = show_fun(x_points, y_points, xs, b, 'm', 'Wezly rownoodlegle')
+        #y_app_cheby = show_fun(x_cheby, y_cheby, xs, b_cheby, 'c', 'Wezly Czebyszewa')
 
+        y_app = show_app3(x_points, y_points, xs, degree, 'm', 'Wezly rownoodlegle')
+        y_app_cheby = show_app3(x_cheby, y_cheby, xs, degree, 'c', 'Wezly Czebyszewa')
 
         ys = f_list(xs)
-        y_app = show_fun(x_points, y_points, xs, b, 'm', 'Wezly rownoodlegle')
-        y_app_cheby = show_fun(x_cheby, y_cheby, xs, b_cheby, 'c', 'Wezly Chebysheva')
-
-        #plt.figure(figsize=(10,10))
-        plt.show()
-
-
-        #norm_max = get_norm(y_app, ys, "eu")
-        #norm_max_cheby = get_norm(y_app_cheby, ys, "eu")
-
         error = get_error(y_app, ys)
         error_cheby = get_error(y_app_cheby, ys)
 
-
         print('Równoodlegle: Liczba wezlow: ' + str(n_points) + '\tStopien: ' + str(degree) + '\tBlad sredniokwadratowy: ' + str(error))
-        print('Chebysheva:   Liczba wezlow: ' + str(n_points) + '\tStopien: ' + str(degree) + '\tBlad sredniokwadratowy: ' + str(error_cheby))
+        print('Czebyszewa:   Liczba wezlow: ' + str(n_points) + '\tStopien: ' + str(degree) + '\tBlad sredniokwadratowy: ' + str(error_cheby))
+
+        plt.grid()
+        plt.show()
         degree += 1
-
-
-
-
 
 
 if __name__ == "__main__":
