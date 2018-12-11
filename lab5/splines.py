@@ -154,7 +154,7 @@ def main():
     res = [['Liczba węzłów', 'spl2, nat', 'spl2, lin', 'spl3, nat', 'spl3, par']]
 
 
-    for i in range(3, 21):
+    for i in range(10, 11):
         print(i)
         plt.figure(figsize=(9, 6))
         #xp = get_xs(start, end, i)
