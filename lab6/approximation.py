@@ -17,6 +17,7 @@ def save(filename, results):
 
 def f(x):
     return pow(x, 2) - (10 * np.cos(np.pi * x))
+    #return -x * np.sin(2 * x - 2)
 
 
 def get_xs(a, b, n):
@@ -128,7 +129,7 @@ def approximate3(xp, yp, xs, m):
         res = calc_ak(xp, yp, 0)/2
         for k in range(1, m+1):
             res += calc_ak(xp, yp, k) * np.cos(k * x)
-            res += calc_bk(xp, yp, k) * np.sin(k * x)
+            res += calc_bk(xp, yp, k) * np.cos(k * x)
         ys.append(res)
     return ys
 
@@ -152,14 +153,17 @@ def show_app3(xp, yp, xs, m, color, title):
 
 
 def main():
-    n_draw = 1000
-    xs = get_xs(-np.pi, np.pi, n_draw)
 
-    n_points = 30
-    degree = 1
+    n_draw = 300
+    zak = np.pi
+    xs = get_xs(-zak, zak, n_draw)
+
+    n_points = 50
+    degree = 10
 
     for j in range(10):
-        x_points = get_xs(-np.pi, np.pi, n_points)
+        plt.figure(figsize=(15, 8))
+        x_points = get_xs(-zak, zak, n_points)
         y_points = f_list(x_points)
 
         x_cheby = cheby_zeros(n_points, -np.pi, np.pi)
@@ -171,18 +175,18 @@ def main():
         #y_app_cheby = show_fun(x_cheby, y_cheby, xs, b_cheby, 'c', 'Wezly Czebyszewa')
 
         y_app = show_app3(x_points, y_points, xs, degree, 'm', 'Wezly rownoodlegle')
-        y_app_cheby = show_app3(x_cheby, y_cheby, xs, degree, 'c', 'Wezly Czebyszewa')
+        #y_app_cheby = show_app3(x_cheby, y_cheby, xs, degree, 'c', 'Wezly Czebyszewa')
 
         ys = f_list(xs)
         error = get_error(y_app, ys)
-        error_cheby = get_error(y_app_cheby, ys)
+        #error_cheby = get_error(y_app_cheby, ys)
 
         print('Równoodlegle: Liczba wezlow: ' + str(n_points) + '\tStopien: ' + str(degree) + '\tBlad sredniokwadratowy: ' + str(error))
-        print('Czebyszewa:   Liczba wezlow: ' + str(n_points) + '\tStopien: ' + str(degree) + '\tBlad sredniokwadratowy: ' + str(error_cheby))
+        #print('Czebyszewa:   Liczba wezlow: ' + str(n_points) + '\tStopien: ' + str(degree) + '\tBlad sredniokwadratowy: ' + str(error_cheby))
 
         plt.grid()
         plt.show()
-        degree += 1
+        n_points += 1
 
 
 if __name__ == "__main__":
