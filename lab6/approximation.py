@@ -17,7 +17,7 @@ def save(filename, results):
 
 def f(x):
     return pow(x, 2) - (10 * np.cos(np.pi * x))
-    #return -x * np.sin(2 * x - 2)
+    #return np.exp(1 * np.cos(6 * x))
 
 
 def get_xs(a, b, n):
@@ -140,10 +140,11 @@ def show_app3(xp, yp, xs, m, color, title):
     # base function
     ys = f_list(xs)
     plt.plot(xp, yp, color + '.', markersize=10)
-    plt.plot(xs, ys, 'grey')
+    plt.plot(xs, ys, 'grey', label='Funkcja aproksymowana')
 
     # approximated function
-    plt.plot(xs, y_app, color, label=title)
+    plt.plot(xs, y_app, color, label='Funkcja aproksymująca')
+    plt.suptitle(title)
     plt.xlabel('x')
     plt.ylabel('y')
     plt.legend()
@@ -158,36 +159,34 @@ def main():
     zak = np.pi
     xs = get_xs(-zak, zak, n_draw)
 
-    n_points = 50
-    degree = 10
+    n_points = 21
+    degree = 20
+    res = [['Liczba punktów', 'Liczba współczynników', 'Błąd średniokwadratowy']]
 
     for j in range(10):
-        plt.figure(figsize=(15, 8))
+        plt.figure(figsize=(13, 8))
         x_points = get_xs(-zak, zak, n_points)
         y_points = f_list(x_points)
 
-        x_cheby = cheby_zeros(n_points, -np.pi, np.pi)
-        y_cheby = f_list(x_cheby)
+        b = approximate(x_points, y_points, degree)
+        y_app = show_fun(x_points, y_points, xs, b, 'm', 'Aproksymacja funkcji F na podstawie '
+                          + str(n_points) + ' węzłów funkcją z ' + str(degree) + ' współczynnikami')
 
-        #b = approximate(x_points, y_points, degree)
-        #b_cheby = approximate(x_cheby, y_cheby, degree)
-        #y_app = show_fun(x_points, y_points, xs, b, 'm', 'Wezly rownoodlegle')
-        #y_app_cheby = show_fun(x_cheby, y_cheby, xs, b_cheby, 'c', 'Wezly Czebyszewa')
-
-        y_app = show_app3(x_points, y_points, xs, degree, 'm', 'Wezly rownoodlegle')
-        #y_app_cheby = show_app3(x_cheby, y_cheby, xs, degree, 'c', 'Wezly Czebyszewa')
+        #y_app = show_app3(x_points, y_points, xs, degree, 'm', 'Aproksymacja funkcji F na podstawie '
+        #                  + str(n_points) + ' węzłów funkcją z ' + str(2 * degree) + ' współczynnikami')
 
         ys = f_list(xs)
         error = get_error(y_app, ys)
-        #error_cheby = get_error(y_app_cheby, ys)
 
         print('Równoodlegle: Liczba wezlow: ' + str(n_points) + '\tStopien: ' + str(degree) + '\tBlad sredniokwadratowy: ' + str(error))
-        #print('Czebyszewa:   Liczba wezlow: ' + str(n_points) + '\tStopien: ' + str(degree) + '\tBlad sredniokwadratowy: ' + str(error_cheby))
 
         plt.grid()
         plt.show()
-        n_points += 1
+        res.append([n_points, degree, error])
+        n_points += 5
+    save('results11', res)
 
+# n_points > degree
 
 if __name__ == "__main__":
     sys.exit(main())
