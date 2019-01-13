@@ -50,60 +50,30 @@ def r_k(x, y, h, t):
     return xs, ys
 
 
-# y'' = u + vy + wy'
-# ddf_eq = {'u': u(x), 'v': v(x), 'w': w(x)} \ - lambda
-def finite_difference_method(x0, y0, xn, yn, n, ddf_eq):
-    h = (xn - x0) / n
+# n - number of sections
+def fdm(x0, xn, y0, yn, n):
+    xs = np.linspace(x0, xn, n+1)
+    b = np.zeros(n-1)
+    a = np.zeros((n-1, n-1))
+    h = xs[1]-xs[0]
 
-    x = np.linspace(x0, xn, n)
-    a, b, d, c = np.zeros([n]), np.zeros([n]), np.zeros([n]), np.zeros([n])
-    for i in range(1, n-1):
-        a[i] = -(1 + ddf_eq['w'](x[i]) * h / 2)
-        b[i] = -ddf_eq['u'](x[i]) * h**2
-        c[i] = -(1 - ddf_eq['w'](x[i]) * h / 2)
-        d[i] = (2 + ddf_eq['v'](x[i]) * h**2)
-
-    A = np.zeros([n, n])
-    for i in range(2, n-2):
-        A[i][i] = d[i]
-        A[i][i-1] = a[i]
-        A[i][i+1] = c[i]
-    A[1][1], A[n-2][n-2] = d[1], d[n-2]
-    A[1][2] = c[1]
-    A[n-2][n-3] = a[n-2]
-
-    b[1] = b[1] - a[1] * y0
-    b[n-2] = b[n-2] - c[n-2] * yn
-    b[0], b[n-1] = y0, yn
-    A[0][0] = 1
-    A[n-1][n-1] = 1
-
-    y = np.linalg.solve(A, b)   # Ay = b
-
-    return x, y
-
-
-def mrs(eq, a, b, alfa, beta, n):
-    x = np.linspace(a, b, n+1)
-    b = np.zeros(n+2)
-    a = np.zeros((n+2, n+2))
-    h = x[1]-x[0]
-
-    b[0] = alfa
-    for i in range(1, n+1):
-        b[i] = h**2 * x[i]
-    b[n+1] = beta
-    print(b)
-
-    a[0][0] = 1
-    for i in range(1, n+1):
+    middle = 16 * h**2 - 2
+    a[0][0] = middle
+    a[0][1] = 1
+    a[n-2][n-3] = 1
+    a[n-2][n-2] = middle
+    b[0] = 16 * xs[1] * h**2 - y0
+    b[n-2] = 16 * xs[n-1] * h**2 - yn
+    for i in range(1, n-2):
         a[i][i-1] = 1
-        a[i][i] = -2
+        a[i][i] = middle
         a[i][i+1] = 1
-    a[n+1][n+1] = beta
-
-    y = np.linalg.solve(a, b)
-    return x, y
+        b[i] = 16 * xs[i+1] * h**2
+    ys = np.linalg.solve(a, b)
+    ys = list(ys)
+    ys.insert(0, y0)
+    ys.append(yn)
+    return xs, ys
 
 
 def draw(xs, ys, color, title):
@@ -134,13 +104,12 @@ def main():
     draw(xs, ys, 'r.', 'Runge-Kutta method')
     '''
 
-
-
     a = 0
     b = (2 * np.pi + 1) / 4
     h = 0.01
 
-    n = int((b-a) / h + 1)
+    n = int((b-a) / h)
+    print(n)
 
     xs = np.linspace(a, b, n)
     ys = []
@@ -148,11 +117,8 @@ def main():
         ys.append(f2_real(xs[i]))
     draw(xs, ys, 'k.', 'Real function')
 
-    # y'' = u + vy + wy'
-    ddf_eq = {'u': lambda x: 16 * x, 'v': lambda x: -16 * x, 'w': lambda x: 0}
-
-    xs, ys = finite_difference_method(0, 0, b, f2_real(b), n, ddf_eq)
-    draw(xs, ys, 'g.', 'FDM method')
+    xs, ys = fdm(a, b, 0, f2_real(b), n)
+    draw(xs, ys, 'm.', 'FDM method')
 
     plt.xlabel('x')
     plt.ylabel('y')
@@ -160,12 +126,6 @@ def main():
     plt.suptitle("Big Title")
     plt.grid()
     plt.show()
-
-    #xs, ys = mrs(ddf_eq, 0, 2, 2, 1, 4)
-
-    #print(len(xs), len(ys))
-    #draw(xs, ys, 'm.', 'FDM method')
-
 
 
 if __name__ == "__main__":
