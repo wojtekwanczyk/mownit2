@@ -32,24 +32,33 @@ def euler(x, y, h, t):
     return xs, ys
 
 
-def r_k(x, y, h, t):
+def r_k(x, y, h, t, degree):
     print("  x        y")
     xs = [x]
     ys = [y]
-    while x <= t - 0.00001:
-        m1 = f(x, y)
-        m2 = f((x+h/2), (y+m1*h/2))
-        m3 = f((x+h/2), (y+m2*h/2))
-        m4 = f((x+h), (y+m3*h))
-        m = ((m1 + 2*m2 + 2*m3 + m4)/6)
-        y = y + m * h
-        x = x + h
-        #print('%.3f' % x + '    ' + '%.3f' % y)
-        xs.append(x)
-        ys.append(y)
-    return xs, ys
+    if degree == 2:
+        while x <= t - 0.00001:
+            m1 = h * f(x, y)
+            y = y + h * f(x + h/2, y + m1/2)
+            x = x + h
+            xs.append(x)
+            ys.append(y)
+        return xs, ys
+    else:
+        while x <= t - 0.00001:
+            m1 = f(x, y)
+            m2 = f((x+h/2), (y+m1*h/2))
+            m3 = f((x+h/2), (y+m2*h/2))
+            m4 = f((x+h), (y+m3*h))
+            m = ((m1 + 2*m2 + 2*m3 + m4)/6)
+            y = y + m * h
+            x = x + h
+            xs.append(x)
+            ys.append(y)
+        return xs, ys
 
 
+# finite differential method
 # n - number of sections
 def fdm(x0, xn, y0, yn, n):
     xs = np.linspace(x0, xn, n+1)
@@ -83,47 +92,48 @@ def draw(xs, ys, color, title):
 
 def main():
 
-    '''
-    a = np.pi / 6
-    b = 3 * np.pi / 2
-    h = 0.1
+    type = 1
 
-    n = int((b-a) / h + 1)
-    print(n)
+    if type == 1:
+        a = np.pi / 6
+        b = 3 * np.pi / 2
+        h = 0.1
 
-    xs = np.linspace(a, b, n)
-    ys = []
-    for i in range(len(xs)):
-        ys.append(f_real(xs[i]))
-    draw(xs, ys, 'k.', 'Real function')
+        n = int((b-a) / h + 1)
+        #print(n)
 
-    xs, ys = euler(a, f_real(a), h, b)
-    draw(xs, ys, 'b.', 'Euler\'s method')
+        xs = np.linspace(a, b, n)
+        ys = []
+        for i in range(len(xs)):
+            ys.append(f_real(xs[i]))
+        draw(xs, ys, 'k.', 'Real function')
 
-    xs, ys = r_k(a, f_real(a), h, b)
-    draw(xs, ys, 'r.', 'Runge-Kutta method')
-    '''
+        xs, ys = euler(a, f_real(a), h, b)
+        draw(xs, ys, 'b.', 'Euler\'s method')
 
-    a = 0
-    b = (2 * np.pi + 1) / 4
-    h = 0.01
+        xs, ys = r_k(a, f_real(a), h, b, 2)
+        draw(xs, ys, 'r.', 'Runge-Kutta method')
+    else:
+        a = 0
+        b = (2 * np.pi + 1) / 4
+        h = 0.01
 
-    n = int((b-a) / h)
-    print(n)
+        n = int((b-a) / h)
+        print(n)
 
-    xs = np.linspace(a, b, n)
-    ys = []
-    for i in range(len(xs)):
-        ys.append(f2_real(xs[i]))
-    draw(xs, ys, 'k.', 'Real function')
+        xs = np.linspace(a, b, n)
+        ys = []
+        for i in range(len(xs)):
+            ys.append(f2_real(xs[i]))
+        draw(xs, ys, 'k.', 'Real function')
 
-    xs, ys = fdm(a, b, 0, f2_real(b), n)
-    draw(xs, ys, 'm.', 'FDM method')
+        xs, ys = fdm(a, b, 0, f2_real(b), n)
+        draw(xs, ys, 'm.', 'FDM method')
 
     plt.xlabel('x')
     plt.ylabel('y')
     plt.legend()
-    plt.suptitle("Big Title")
+    #plt.suptitle("Big Title")
     plt.grid()
     plt.show()
 
