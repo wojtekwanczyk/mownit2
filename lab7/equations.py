@@ -1,6 +1,14 @@
 import sys
 import matplotlib.pyplot as plt
 import numpy as np
+from pandas import DataFrame
+
+
+def save(filename, results):
+    filename += '.xlsx'
+    df = DataFrame(data=results)
+    # print(df)
+    df.to_excel(filename, sheet_name='sheet1', index=False, header=False)
 
 
 def f(x, y):
@@ -19,9 +27,10 @@ def f2_real(x):
 
 
 def euler(x, y, h, t):
-    print("  x        y")
+    #print("  x        y")
     xs = [x]
     ys = [y]
+    #print('%.3f' % x + '    ' + '%.3f' % y)
     while x <= t - 0.00001:
         k = h * f(x, y)
         y += k
@@ -33,7 +42,7 @@ def euler(x, y, h, t):
 
 
 def r_k(x, y, h, t, degree):
-    print("  x        y")
+    #print("  x        y")
     xs = [x]
     ys = [y]
     if degree == 2:
@@ -86,56 +95,86 @@ def fdm(x0, xn, y0, yn, n):
 
 
 def draw(xs, ys, color, title):
-    plt.plot(xs, ys, color, label=title, markersize=5)
+    plt.plot(xs, ys, color, label=title, markersize=11)
     plt.draw()
 
 
 def main():
 
-    type = 1
+
+
+    type = 2
+
 
     if type == 1:
+        res = [['Krok metody', 'Błąd metody Eulera', 'Błąd metody RK2', 'Błąd metody RK4']]
         a = np.pi / 6
         b = 3 * np.pi / 2
-        h = 0.1
 
-        n = int((b-a) / h + 1)
-        #print(n)
+        for n in range(4999, 5000, 200):
+            h = (b-a) / (n-1)
 
-        xs = np.linspace(a, b, n)
-        ys = []
-        for i in range(len(xs)):
-            ys.append(f_real(xs[i]))
-        draw(xs, ys, 'k.', 'Real function')
+            xs = np.linspace(a, b, n)
+            ys = []
+            for i in range(len(xs)):
+                ys.append(f_real(xs[i]))
+            draw(xs, ys, 'k.', 'Real function')
 
-        xs, ys = euler(a, f_real(a), h, b)
-        draw(xs, ys, 'b.', 'Euler\'s method')
+            xs, y2 = euler(a, f_real(a), h, b)
+            ee = np.linalg.norm(np.subtract(y2, ys))
+            draw(xs, y2, 'b.', 'Euler\'s method')
 
-        xs, ys = r_k(a, f_real(a), h, b, 2)
-        draw(xs, ys, 'r.', 'Runge-Kutta method')
+            xs, y2 = r_k(a, f_real(a), h, b, 2)
+            erk2 = np.linalg.norm(np.subtract(y2, ys))
+            draw(xs, y2, 'r.', 'RK 2nd degree method')
+
+            xs, y2 = r_k(a, f_real(a), h, b, 4)
+            erk4 = np.linalg.norm(np.subtract(y2, ys))
+            draw(xs, y2, 'g.', 'RK 4th degree method')
+
+            line = [h, ee, erk2, erk4]
+            print(line)
+            res.append(line)
+
+            plt.xlabel('x')
+            plt.ylabel('y')
+            plt.legend()
+            plt.grid()
+            plt.show()
     else:
+        res = [['Krok metody', 'Błąd metody RS']]
         a = 0
         b = (2 * np.pi + 1) / 4
-        h = 0.01
 
-        n = int((b-a) / h)
-        print(n)
+        xr = np.linspace(a, b, 100)
+        yr = [f2_real(x) for x in xr]
 
-        xs = np.linspace(a, b, n)
-        ys = []
-        for i in range(len(xs)):
-            ys.append(f2_real(xs[i]))
-        draw(xs, ys, 'k.', 'Real function')
+        for n in range(10, 200, 10):
+            print(n)
+            h = (b - a) / (n - 1)
 
-        xs, ys = fdm(a, b, 0, f2_real(b), n)
-        draw(xs, ys, 'm.', 'FDM method')
+            xs = np.linspace(a, b, n+1)
+            ys = []
+            for i in range(len(xs)):
+                ys.append(f2_real(xs[i]))
+            draw(xr, yr, 'k', 'Real function')
 
-    plt.xlabel('x')
-    plt.ylabel('y')
-    plt.legend()
-    #plt.suptitle("Big Title")
-    plt.grid()
-    plt.show()
+            xs, y2 = fdm(a, b, 0, f2_real(b), n)
+            er = np.linalg.norm(np.subtract(y2, ys))
+            draw(xs, y2, 'm.', 'FDM method')
+
+            plt.xlabel('x')
+            plt.ylabel('y')
+            plt.legend()
+            plt.grid()
+            plt.show()
+
+            line = [h, er]
+            print(line)
+            res.append(line)
+
+    #print(res)
+    #save('results5', res)
 
 
 if __name__ == "__main__":
