@@ -87,54 +87,46 @@ def intrepolate_lagrange(xs, ys, x):
     return ret
 
 
+def hermite2(f, df, xs, x_draw):
+    y_draw = []
+    for k in range(len(x_draw)):
+        n = 2*len(xs)
+        a = np.zeros((n, n))
+        tab = []
+        y = 0
+        m = 1
 
+        for i in range(len(xs)):
+            tab.append(xs[i])
+            tab.append(xs[i])
 
+        for i in range(n):
+            for j in range(i+1):
+                if j == 0:
+                    a[i][j] = f(tab[i])
+                elif j == 1 & i % 2 == 1:
+                    a[i][j] = df(tab[i])
+                else:
+                    a[i][j] = a[i][j-1] - a[i-1][j-1]
+                    a[i][j] = a[i][j] / (tab[i] - tab[i-j])
 
-def plot_hermite(x, y, dens):
-    def calc_hermite(x1, x2, y1, y2, t1, t2):
-        lod = dens // (len(x)-1)
-        xnew = []
-        ynew = []
-        for i in range(lod):
-            t = i / (lod - 1)
-            b1 = 2 * t * t * t - 3 * t * t + 1
-            b2 = -2 * t * t * t + 3 * t * t
-            bt1 = t * t * t - 2 * t * t + t
-            bt2 = t * t * t - t * t
-            xnew.append(b1 * x1 + b2 * x2 + bt1 * t1[0] + bt2 * t2[0])
-            ynew.append(b1 * y1 + b2 * y2 + bt1 * t1[1] + bt2 * t2[1])
-        return xnew, ynew
+        for i in range(n):
+            y = y + a[i][i] * m
+            m = m * (x_draw[k] - tab[i])
+        y_draw.append(y)
 
-    t1 = (x[1]-x[0])/2, (y[1]-y[0])/2
-    t2 = (x[2]-x[0])/2, (y[2]-y[0])/2
-    xnew, ynew = calc_hermite(x[0], x[1], y[0], y[1], t1, t2)
-    for j in range(1, len(x)-2):
-        x1, x2, x3, x4 = x[j-1], x[j], x[j+1], x[j+2]
-        y1, y2, y3, y4 = y[j-1], y[j], y[j+1], y[j+2]
-        t1 = (x3-x1)/2, (y3-y1)/2
-        t2 = (x4-x2)/2, (y4-y2)/2
-        auxx, auxy = calc_hermite(x2, x3, y2, y3, t1, t2)
-        for i in auxx:
-            xnew.append(i)
-        for i in auxy:
-            ynew.append(i)
-    l = len(x)-1
-    t1 = (x[l]-x[l-2])/2, (y[l]-y[l-2])/2
-    t2 = (x[l]-x[l-1])/2, (y[l]-y[l-1])/2
-    auxx, auxy = calc_hermite(x[l-1], x[l], y[l-1], y[l], t1, t2)
-    for i in auxx:
-        xnew.append(i)
-    for i in auxy:
-        ynew.append(i)
-
-
-    plt.plot(xnew, ynew, 'k-')
+    plt.plot(x_draw, y_draw, 'k-')
     plt.show()
-    return ynew
+
+    return y_draw
 
 
 def f(x):
     return pow(x,2) - (10 * np.cos(np.pi * x))
+
+
+def df(x):
+    return 2*x + (10 * np.pi * np.sin(np.pi * x))
 
 
 def f_list(xs):
@@ -158,14 +150,14 @@ def main():
 
     zak = np.pi
 
-    n_draw = 1000
+    n_draw = 500
     beg = -zak
     end = zak
 
+    res = [['Liczba węzłów', 'Norma maksimum', 'Norma Euklidesowa']]
 
-
-    for i in range(4,21):
-        y1 = show_fun(f, beg, end, n_draw, 'b-')
+    for i in range(3,21):
+        y1 = show_fun(f, beg, end, n_draw-1, 'b-')
 
         n_inter = i
         x_cheby = cheby_zeros(n_inter, -zak, zak)
@@ -210,11 +202,13 @@ def main():
 
         # Hermite
 
-        f_show_points(x_eq, 'k.')
-        y2 = plot_hermite(x_eq, y_eq, n_draw)
-        mini = min(len(y2), len(y1))
-        print(str(n_inter) + " eu Hermite(eq): " + str(np.linalg.norm(np.subtract(y2[:mini], y1[:mini]))))
-        print(str(n_inter) + " max Hemrite(eq): " + str(np.linalg.norm(np.subtract(y2[:mini], y1[:mini]), np.inf)))
+        f_show_points(x_cheby, 'k.')
+        x_draw = np.linspace(beg, end, n_draw)
+        y2 = hermite2(f, df, x_cheby, x_draw)
+        print(str(n_inter) + " eu Hermite(eq): " + str(np.linalg.norm(np.subtract(y2, y1))))
+        print(str(n_inter) + " max Hemrite(eq): " + str(np.linalg.norm(np.subtract(y2, y1), np.inf)))
+        res.append([i, np.linalg.norm(np.subtract(y2, y1)), np.linalg.norm(np.subtract(y2, y1), np.inf)])
+    save('results2', res)
 
 
 if __name__ == "__main__":
